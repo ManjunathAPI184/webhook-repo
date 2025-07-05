@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Webhook Dashboard</title>
+
+ 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/utc.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/timezone.js"></script>
+    <script src="/static/script.js" defer></script>
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #1e40af;
+            --success-color: #16a34a;
+            --success-dark: #15803d;
+            --warning-color: #d97706;
+            --warning-dark: #b45309;
+            --danger-color: #dc2626;
+            --danger-dark: #991b1b;
+            --background-light: #f8fafc;
+            --background-medium: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn {
+            background: var(--danger-color);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: var(--danger-dark);
+            transform: translateY(-2px);
+        }
+
+        .clear-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100%;
+            height: 1px;
+            background: white;
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover::after {
+            left: 100%;
+        }
+
+        .clear-btn:hover {
+            background: #b91c1c;
+        }
+
+        .events-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-card {
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0.75rem;
+            background: white;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--hover-shadow);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-card.push {
+            border-left: 4px solid var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .event-card.push:hover {
+            border-left: 4px solid var(--primary-dark);
+        }
+
+        .event-card.pull_request {
+            border-left: 4px solid var(--warning-color);
+            background: rgba(217, 119, 6, 0.05);
+        }
+
+        .event-card.pull_request:hover {
+            border-left: 4px solid var(--warning-dark);
+        }
+
+        .event-card.merged {
+            border-left: 4px solid var(--success-color);
+            background: rgba(22, 163, 74, 0.05);
+        }
+
+        .event-card.merged:hover {
+            border-left: 4px solid var(--success-dark);
+        }
+
+        .event-type {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .event-details {
+            margin-top: 0;
+            padding: 0;
+        }
+
+        .event-details strong {
+            color: var(--text-secondary);
+            display: inline-block;
+            font-weight: 500;
+            min-width: 130px;
+            margin-right: 1rem;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+
+        .event-details span {
+            color: var(--text-primary);
+            font-weight: 400;
+            font-size: 0.95rem;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .event-details span {
+            color: var(--text-primary);
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+
+        .event-details span {
+            display: inline-block;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        .event-time {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--hover-shadow);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GitHub Webhook Dashboard</h1>
+            <div class="header-actions">
+                <button class="clear-btn" onclick="clearEvents()">
+                    <i class="fas fa-trash-alt"></i> Clear Events
+                </button>
+            </div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalEvents">0</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pushEvents">0</div>
+                <div class="stat-label">Push Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="prEvents">0</div>
+                <div class="stat-label">PR Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="mergedPrs">0</div>
+                <div class="stat-label">Merged PRs</div>
+            </div>
+        </div>
+
+        <div class="events-container">
+            <h2>Recent Events</h2>
+            <div id="events" class="loading">Loading events...</div>
+        </div>
+    </div>
+</body>
+</html>
